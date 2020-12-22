@@ -2,11 +2,11 @@ local toolbar = plugin:CreateToolbar("Dynamo")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StoredDynamo = script.Parent.Dynamo
 -- Test Button
-local newScriptButton = toolbar:CreateButton("Create Empty Script", "Create an empty script", "rbxassetid://4458901886")
+local newScriptButton = toolbar:CreateButton("Test Button", "Does nothing", "rbxassetid://4458901886")
 local function onNewScriptButtonClicked()
-	local newScript = Instance.new("Script")
-	newScript.Source = ""
-	newScript.Parent = game:GetService("ServerScriptService")
+	-- local newScript = Instance.new("Script")
+	-- newScript.Source = ""
+	-- newScript.Parent = game:GetService("ServerScriptService")
 end
 newScriptButton.Click:Connect(onNewScriptButtonClicked)
 

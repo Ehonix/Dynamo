@@ -13,22 +13,10 @@ function Animation.new(properties, looped)
 	return newAnimation
 end
 
-function Animation:UnlockKeyframes()
+function Animation:ResetProperties()
 	for _, Property in pairs(self.Properties) do
-		for _, keyframe in pairs(Property.Keyframes) do
-			keyframe.Passed = false
-		end
+		Property:Reset()
 	end
-end
-
-function Animation:PlayProperties()
-	for _, Property in pairs(self.Properties) do
-		Property:Play()
-	end
-end
-function Animation:Disconnect(heartbeat)
-	heartbeat:Disconnect()
-	self:UnlockKeyframes()
 end
 
 function Animation:Pause()
@@ -44,7 +32,7 @@ function Animation:Play()
 		warn("TRIED PLAYING TWEEN WHEN IT IS ALREADY PLAYING")
 	else
 		self.PlaybackState = Enum.PlaybackState.Playing
-		self:PlayProperties()
+		self:ResetProperties()
 		spawn(function()
 			local heartbeat
 			heartbeat = RunService.Heartbeat:Connect(function(step)
@@ -60,15 +48,15 @@ function Animation:Play()
 					-- Completed
 					if propertiesRunning == 0 then
 						if self.Looped then
-							self:PlayProperties()
+							self:ResetProperties()
 						else
 							self.PlaybackState = Enum.PlaybackState.Completed
 							self.Completed:Fire()
-							self:Disconnect(heartbeat)
+							heartbeat:Disconnect()
 						end
 					end
 				elseif self.PlaybackState == Enum.PlaybackState.Cancelled then
-					self:Disconnect(heartbeat)
+					heartbeat:Disconnect()
 				end
 			end)
 		end)

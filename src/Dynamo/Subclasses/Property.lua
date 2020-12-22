@@ -21,20 +21,12 @@ function Property.new(instance, propertyName, keyframes, looped)
 	return newProperty
 end
 
-function Property:Play()
+function Property:Reset()
 	for _, keyframe in pairs(self.Keyframes) do
 		keyframe.Passed = false
 	end
 	self.Time = 0
 	self.PlaybackState = Enum.PlaybackState.Begin
-end
-
-function ReverseTable(t)
-	local output = {}
-	for i = #t, 1, -1 do
-		output[#output+1] = t[i]
-	end
-	return output
 end
 
 function Property:Step(step)
