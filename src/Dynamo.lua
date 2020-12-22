@@ -1,4 +1,4 @@
-local Dynamo = {}
+local Dynamo = {Version = "1.0.0"}
 
 local Animation = {}
 do
@@ -13,7 +13,6 @@ do
 			end
 		end
 	end
-
 	function Animation:Pause()
 		self.PlaybackState = Enum.PlaybackState.Paused
 	end
