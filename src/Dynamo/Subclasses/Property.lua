@@ -8,8 +8,12 @@ function Property.new(instance, propertyName, keyframes, looped)
 	setmetatable(newProperty, Property)
 	newProperty.Keyframes = keyframes
 	newProperty.Length = 0
+	newProperty.EndKeyframes = {}
 	for _, keyframe in pairs(keyframes) do
-		newProperty.Length = math.max(newProperty.Length, keyframe.EndTime)
+		if newProperty.Length <= keyframe.EndTime then
+			newProperty.Length = keyframe.EndTime
+			newProperty.EndKeyframes[#newProperty.EndKeyframes + 1] = keyframe
+		end
 	end
 	newProperty.Instance = instance
 	newProperty.PropertyName = propertyName
@@ -31,7 +35,13 @@ end
 
 function Property:Step(step)
 	self.Time += step
-	if self.Looped then
+	if self.Looped and self.Time > self.Length then
+		for _, keyframe in pairs(self.EndKeyframes) do
+			keyframe.Completed:Fire()
+		end
+		for _, keyframe in pairs(self.Keyframes) do
+			keyframe.Passed = false
+		end
 		self.Time -= self.Length * math.floor(self.Time / self.Length)
 	end
 	local runningKeyframes = 0
@@ -40,28 +50,26 @@ function Property:Step(step)
 			runningKeyframes += 1
 			local localTime = self.Time - keyframe.StartTime
 			-- repititions are used to determine whenether the keyframe is finished or not
-			local repititions = math.max(math.floor(localTime / keyframe.Duration), 0)
-			localTime -= repititions * keyframe.Duration
 			if localTime >= 0 and not keyframe.Passed then
 				local alpha
 				if localTime < keyframe.EndTime then
 					alpha = TweenService:GetValue(localTime / keyframe.Duration, keyframe.EasingStyle, keyframe.EasingDirection)
-				elseif not keyframe.Passed then
+				else
 					alpha = 1
 					keyframe.Passed = true
 					keyframe.Completed:Fire()
 				end
 
 				if alpha then
-					if self.PropertyType == "CFrame"  then
+					if self.PropertyType == "CFrame" then
+						local objectSpaces = self:GetObjectSpaces()
 						if keyframe.UseParentSpace then
 							local parentCFrame = self.Instance.Parent.CFrame
-							for _, value in pairs(keyframe.Interpolation.Values) do
-								value = parentCFrame:ToWorldSpace(value)
-							end
+							self.Instance[self.PropertyName] = parentCFrame:ToWorldSpace(keyframe.Interpolation:Interpolate(alpha))
+						else
+							self.Instance[self.PropertyName] = keyframe.Interpolation:Interpolate(alpha)
 						end
-						local objectSpaces = self:GetObjectSpaces()
-						self.Instance[self.PropertyName] = keyframe.Interpolation:Interpolate(alpha)
+						
 						if keyframe.CarryChildren then
 							for part, objectSpace in pairs(objectSpaces) do
 								part.CFrame = self.Instance.CFrame:ToWorldSpace(objectSpace)
