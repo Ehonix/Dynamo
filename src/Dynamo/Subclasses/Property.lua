@@ -3,16 +3,21 @@ Property.__index = Property
 
 local TweenService = game:GetService("TweenService")
 
-function Property.new(instance, propertyName, keyframes)
+function Property.new(instance, propertyName, keyframes, looped)
 	local newProperty = {}
 	setmetatable(newProperty, Property)
 	newProperty.Keyframes = keyframes
+	newProperty.Length = 0
+	for _, keyframe in pairs(keyframes) do
+		newProperty.Length = math.max(newProperty.Length, keyframe.EndTime)
+	end
 	newProperty.Instance = instance
 	newProperty.PropertyName = propertyName
 	newProperty.PropertyType = typeof(instance[propertyName])
 	newProperty.Completed = Instance.new("BindableEvent")
 	newProperty.PlaybackState = Enum.PlaybackState.Begin
 	newProperty.Time = 0
+	newProperty.Looped = looped
 	return newProperty
 end
 
@@ -34,6 +39,9 @@ end
 
 function Property:Step(step)
 	self.Time += step
+	if self.Looped then
+		self.Time -= self.Length * math.floor(self.Time / self.Length)
+	end
 	local runningKeyframes = 0
 	for _, keyframe in pairs(self.Keyframes) do
 		if not keyframe.Passed then
@@ -42,14 +50,9 @@ function Property:Step(step)
 			-- repititions are used to determine whenether the keyframe is finished or not
 			local repititions = math.max(math.floor(localTime / keyframe.Duration), 0)
 			localTime -= repititions * keyframe.Duration
-			if localTime >= 0 and (repititions <= keyframe.RepeatCount or keyframe.RepeatCount < 0 or not keyframe.Passed) then
-				local values = keyframe.Interpolation.Values
-				if keyframe.Reverses and (repititions % 2 == 0 or (repititions > keyframe.RepeatCount and keyframe.RepeatCount > 0)) then
-					ReverseTable(values)
-				end
-
+			if localTime >= 0 and not keyframe.Passed then
 				local alpha
-				if localTime < keyframe.EndTime and (repititions <= keyframe.RepeatCount or keyframe.RepeatCount < 0) then
+				if localTime < keyframe.EndTime then
 					alpha = TweenService:GetValue(localTime / keyframe.Duration, keyframe.EasingStyle, keyframe.EasingDirection)
 				elseif not keyframe.Passed then
 					alpha = 1
@@ -61,7 +64,7 @@ function Property:Step(step)
 					if self.PropertyType == "CFrame"  then
 						if keyframe.UseParentSpace then
 							local parentCFrame = self.Instance.Parent.CFrame
-							for _, value in pairs(values) do
+							for _, value in pairs(keyframe.Interpolation.Values) do
 								value = parentCFrame:ToWorldSpace(value)
 							end
 						end

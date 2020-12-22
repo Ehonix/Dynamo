@@ -15,16 +15,12 @@ newScriptButton.Click:Connect(onNewScriptButtonClicked)
 function CreateDynamo(parent)
     local Dynamo = StoredDynamo:Clone()
     Dynamo.Parent = parent
-    for _, v in ipairs(script.Parent.Subclasses:GetChildren()) do
-        v:Clone()
-        v.Parent = Dynamo
-    end
     return Dynamo
 end
 
 local Dynamo
 for _, descendant in ipairs(ReplicatedStorage:GetDescendants()) do
-    if not Dynamo and descendant.Name == "Dynamo" and descendant:IsA("ModuleScript") then
+    if not Dynamo and descendant.Name == "Dynamo" and descendant:IsA("Folder") then
         Dynamo = CreateDynamo(descendant.Parent)
         descendant:Destroy()
     end

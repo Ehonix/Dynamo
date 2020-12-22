@@ -66,7 +66,6 @@ function Animation:Play()
 							self.Completed:Fire()
 							self:Disconnect(heartbeat)
 						end
-
 					end
 				elseif self.PlaybackState == Enum.PlaybackState.Cancelled then
 					self:Disconnect(heartbeat)
